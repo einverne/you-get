@@ -16,6 +16,15 @@ def cntv_download_by_id(id, title = None, output_dir = '.', merge = True, info_o
     alternatives = [x for x in video.keys() if x.endswith('hapters')]
     #assert alternatives in (['chapters'], ['lowChapters', 'chapters'], ['chapters', 'lowChapters']), alternatives
     chapters = video['chapters'] if 'chapters' in video else video['lowChapters']
+    if 'chapters4' in video:
+        chapters = video['chapters4']
+    elif 'chapter3' in video:
+        chapters = video['chapters3']
+    elif 'chapters2' in video:
+        chapters = video['chapters2']
+    elif 'chapters' in video:
+        chapters = video['chapters']
+
     urls = [x['url'] for x in chapters]
     ext = r1(r'\.([^.]+)$', urls[0])
     assert ext in ('flv', 'mp4')
@@ -27,7 +36,7 @@ def cntv_download_by_id(id, title = None, output_dir = '.', merge = True, info_o
     print_info(site_info, title, ext, size)
     if not info_only:
         # avoid corrupted files - don't merge
-        download_urls(urls, title, ext, size, output_dir = output_dir, merge = False)
+        download_urls(urls, title, ext, size, output_dir = output_dir, merge = True)
 
 def cntv_download(url, output_dir = '.', merge = True, info_only = False, **kwargs):
     if re.match(r'http://tv\.cntv\.cn/video/(\w+)/(\w+)', url):
