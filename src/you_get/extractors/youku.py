@@ -10,23 +10,38 @@ import time
 import traceback
 import json
 import urllib.request
+import urllib.parse
+
+def quote_cna(cna):
+    if '%' in cna:
+        return cna
+    return urllib.parse.quote(cna)
 
 def fetch_cna():
     if cookies:
         for cookie in cookies:
             if cookie.name == 'cna' and cookie.domain == '.youku.com':
                 log.i('Found cna in imported cookies. Use it')
-                return cookie.value
-    url = 'http://gm.mmstat.com/yt/ykcomment.play.commentInit?cna='
+                return quote_cna(cookie.value)
+    url = 'http://log.mmstat.com/eg.js'
     req = urllib.request.urlopen(url)
-    return req.info()['Set-Cookie'].split(';')[0].split('=')[1]
+    headers = req.getheaders()
+    for header in headers:
+        if header[0].lower() == 'set-cookie':
+            n_v = header[1].split(';')[0]
+            name, value = n_v.split('=')
+            if name == 'cna':
+                return quote_cna(value)
+    log.w('It seems that the client failed to fetch a cna cookie. Please load your own cookie if possible')
+    return quote_cna('DOG4EdW4qzsCAbZyXbU+t7Jt')
 
-def youku_ups(vid, ccode='0401'):
+def youku_ups(vid, ccode='0401', password=None, referer='http://v.youku.com'):
     url = 'https://ups.youku.com/ups/get.json?vid={}&ccode={}'.format(vid, ccode)
     url += '&client_ip=192.168.1.1'
     url += '&utid=' + fetch_cna()
     url += '&client_ts=' + str(int(time.time()))
-    return json.loads(get_content(url))
+    if password is not None: url += '&password=' + password
+    return json.loads(get_content(url, headers=dict(Referer=referer)))
 
 class Youku(VideoExtractor):
     name = "优酷 (Youku)"
@@ -177,8 +192,19 @@ class Youku(VideoExtractor):
             data = youku_ups(self.vid, '0402')['data']
         else:
             data = youku_ups(self.vid)['data']
-        if data.get('error'):
-            log.wtf(data['error']['note'])
+        if data.get('stream') is None:
+            if data.get('error'):
+                if data['error']['code'] == -2002:
+                    self.password_protected = True
+                    self.password = input(log.sprint('Password: ', log.YELLOW))
+                    data = youku_ups(self.vid, password=self.password)['data']
+                    if data.get('error'):
+                        log.wtf(data['error']['note'])
+                else:
+                    log.wtf(data['error']['note'])
+            else:
+                log.wtf('Unknown error')
+
         self.title = data['video']['title']
         stream_types = dict([(i['id'], i) for i in self.stream_types])
         audio_lang = data['stream'][0]['audio_lang']
@@ -197,7 +223,8 @@ class Youku(VideoExtractor):
                         'size': stream['size'],
                         'pieces': [{
                             'segs': stream['segs']
-                        }]
+                        }],
+                        'm3u8_url': stream['m3u8_url']
                     }
                     src = []
                     for seg in stream['segs']:
