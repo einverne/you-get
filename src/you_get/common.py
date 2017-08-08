@@ -161,6 +161,22 @@ def rc4(key, data):
         out_list.append(char ^ prn)
 
     return bytes(out_list)
+
+def general_m3u8_extractor(url):
+    path_len = len(url.split('/')[-1])
+    base_url = url[:-path_len]
+
+    m3u8_list = get_content(url).split('\n')
+    urls = []
+    for line in m3u8_list:
+        line = line.strip()
+        if line and not line.startswith('#'):
+            if line.startswith('http'):
+                urls.append(line)
+            else:
+                urls.append(base_url + line)
+    return urls
+
 def maybe_print(*s):
     try: print(*s)
     except: pass
@@ -459,6 +475,9 @@ def url_info(url, faker = False, headers = {}):
         'video/x-ms-asf': 'asf',
         'audio/mp4': 'mp4',
         'audio/mpeg': 'mp3',
+        'audio/wav': 'wav',
+        'audio/x-wav': 'wav',
+        'audio/wave': 'wav',
         'image/jpeg': 'jpg',
         'image/png': 'png',
         'image/gif': 'gif',
@@ -1027,7 +1046,7 @@ def playlist_not_supported(name):
         raise NotImplementedError('Playlist is not supported for ' + name)
     return f
 
-def print_info(site_info, title, type, size):
+def print_info(site_info, title, type, size, **kwargs):
     if json_output:
         json_output_.print_info(site_info=site_info, title=title, type=type, size=size)
         return
@@ -1085,6 +1104,8 @@ def print_info(site_info, title, type, size):
         type_info = "MPEG-4 audio (%s)" % type
     elif type in ['audio/mpeg']:
         type_info = "MP3 (%s)" % type
+    elif type in ['audio/wav', 'audio/wave', 'audio/x-wav']:
+        type_info = 'Waveform Audio File Format ({})'.format(type)
 
     elif type in ['image/jpeg']:
         type_info = "JPEG Image (%s)" % type
@@ -1092,14 +1113,22 @@ def print_info(site_info, title, type, size):
         type_info = "Portable Network Graphics (%s)" % type
     elif type in ['image/gif']:
         type_info = "Graphics Interchange Format (%s)" % type
-
+    elif type in ['m3u8']:
+        if 'm3u8_type' in kwargs:
+            if kwargs['m3u8_type'] == 'master':
+                type_info = 'M3U8 Master {}'.format(type)
+        else:
+            type_info = 'M3U8 Playlist {}'.format(type)
     else:
         type_info = "Unknown type (%s)" % type
 
     maybe_print("Site:      ", site_info)
     maybe_print("Title:     ", unescape_html(tr(title)))
     print("Type:      ", type_info)
-    print("Size:      ", round(size / 1048576, 2), "MiB (" + str(size) + " Bytes)")
+    if type != 'm3u8':
+        print("Size:      ", round(size / 1048576, 2), "MiB (" + str(size) + " Bytes)")
+    if type == 'm3u8' and 'm3u8_url' in kwargs:
+        print('M3U8 Url:   {}'.format(kwargs['m3u8_url']))
     print()
 
 def mime_to_container(mime):
@@ -1215,10 +1244,11 @@ def script_main(script_name, download, download_playlist, **kwargs):
     -t | --timeout <SECONDS>            Set socket timeout.
     -d | --debug                        Show traceback and other debug info.
     -I | --input-file                   Read non-playlist urls from file.
+    -P | --password <PASSWORD>          Set video visit password to PASSWORD.
     '''
 
-    short_opts = 'Vhfiuc:ndF:O:o:p:x:y:s:t:I:'
-    opts = ['version', 'help', 'force', 'info', 'url', 'cookies', 'no-caption', 'no-merge', 'no-proxy', 'debug', 'json', 'format=', 'stream=', 'itag=', 'output-filename=', 'output-dir=', 'player=', 'http-proxy=', 'socks-proxy=', 'extractor-proxy=', 'lang=', 'timeout=', 'input-file=']
+    short_opts = 'Vhfiuc:ndF:O:o:p:x:y:s:t:I:P:'
+    opts = ['version', 'help', 'force', 'info', 'url', 'cookies', 'no-caption', 'no-merge', 'no-proxy', 'debug', 'json', 'format=', 'stream=', 'itag=', 'output-filename=', 'output-dir=', 'player=', 'http-proxy=', 'socks-proxy=', 'extractor-proxy=', 'lang=', 'timeout=', 'input-file=', 'password=']
 #dead code? download_playlist is a function and always True
 #if download_playlist:
     short_opts = 'l' + short_opts
@@ -1252,6 +1282,7 @@ def script_main(script_name, download, download_playlist, **kwargs):
     traceback = False
     timeout = 600
     urls_from_file = []
+    password = None
 
     for o, a in opts:
         if o in ('-V', '--version'):
@@ -1330,6 +1361,8 @@ def script_main(script_name, download, download_playlist, **kwargs):
             lang = a
         elif o in ('-t', '--timeout'):
             timeout = int(a)
+        elif o in ('-P', '--password',):
+            password = a
         elif o in ('-I', '--input-file'):
             logging.debug('you are trying to load urls from {}'.format(a))
             if playlist:
