@@ -41,8 +41,11 @@ def youku_ups(vid, ccode='0401', password=None, referer='http://v.youku.com'):
     url += '&utid=' + fetch_cna()
     url += '&client_ts=' + str(int(time.time()))
     if password is not None: url += '&password=' + password
-    headers = dict(Referer=referer)
-    headers['User-Agent'] = fake_headers['User-Agent']
+    # headers = dict(Referer=referer)
+    headers = {
+        'referer': Ubuntu_headers['referer'],
+        'User-Agent': Ubuntu_headers['User-Agent']
+    }
     return json.loads(get_content(url, headers=headers))
 
 class Youku(VideoExtractor):

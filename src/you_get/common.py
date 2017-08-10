@@ -133,6 +133,18 @@ fake_headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:51.0) Gecko/20100101 Firefox/51.0'
 }
 
+OnePlus_headers = {
+    'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0.1; ONEPLUS A3000 Build/MMB29M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.125 Mobile Safari/537.36'
+}
+
+Ubuntu_headers = {
+    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'accept-language': 'en-US,en;q=0.5',
+    'accept-encoding': 'gzip, deflate, br',
+    'referer': 'http://static.youku.com/v201708091000.0/v/swf/upsplayer/loader.swf',
+    'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:54.0) Gecko/20100101 Firefox/54.0'
+}
+
 if sys.stdout.isatty():
     default_encoding = sys.stdout.encoding.lower()
 else:
