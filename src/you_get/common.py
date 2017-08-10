@@ -1208,7 +1208,6 @@ def print_more_compatible(*args, **kwargs):
     return ret
 
 
-
 def download_main(download, download_playlist, urls, playlist, **kwargs):
     for url in urls:
         if url.startswith('https://'):
@@ -1222,6 +1221,14 @@ def download_main(download, download_playlist, urls, playlist, **kwargs):
             download(url, **kwargs)
 
 def script_main(script_name, download, download_playlist, **kwargs):
+    """
+
+    :param script_name:
+    :param download: 下载器方法
+    :param download_playlist:
+    :param kwargs:
+    :return:
+    """
     def version():
         log.i('version %s, a tiny downloader that scrapes the web.'
               % get_version(kwargs['repo_path']

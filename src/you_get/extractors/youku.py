@@ -48,6 +48,7 @@ def youku_ups(vid, ccode='0401', password=None, referer='http://v.youku.com'):
     }
     return json.loads(get_content(url, headers=headers))
 
+
 class Youku(VideoExtractor):
     name = "优酷 (Youku)"
 
@@ -199,6 +200,7 @@ class Youku(VideoExtractor):
         else:
             data = youku_ups(self.vid)['data']
         if data.get('stream') is None:
+            # Error handle
             if data.get('error'):
                 if data['error']['code'] == -2002:
                     self.password_protected = True
@@ -214,6 +216,8 @@ class Youku(VideoExtractor):
                 log.wtf('Unknown error')
 
         self.title = data['video']['title']
+        self.username = data['video']['username']
+        self.tags = data['video']['tags']
         stream_types = dict([(i['id'], i) for i in self.stream_types])
         audio_lang = data['stream'][0]['audio_lang']
 
@@ -232,6 +236,8 @@ class Youku(VideoExtractor):
                         'pieces': [{
                             'segs': stream['segs']
                         }],
+                        'width': stream['width'],
+                        'height': stream['height'],
                         'm3u8_url': stream['m3u8_url']
                     }
                     src = []
@@ -370,10 +376,10 @@ class Youku(VideoExtractor):
         playsign = json.loads(get_content(sign_url))['playsign']
 
         #to be injected and replace ct10 and 12
-        api85_url = 'http://play.youku.com/partner/get.json?cid={client_id}&vid={vid}&ct=85&sign={playsign}'.format(client_id = client_id, vid = vid, playsign = playsign)
-        api86_url = 'http://play.youku.com/partner/get.json?cid={client_id}&vid={vid}&ct=86&sign={playsign}'.format(client_id = client_id, vid = vid, playsign = playsign)
+        api85_url = 'http://play.youku.com/partner/get.json?cid={client_id}&vid={vid}&ct=85&sign={playsign}'.format(client_id=client_id, vid=vid, playsign=playsign)
+        api86_url = 'http://play.youku.com/partner/get.json?cid={client_id}&vid={vid}&ct=86&sign={playsign}'.format(client_id=client_id, vid=vid, playsign=playsign)
 
-        self.prepare(api_url = api85_url, api12_url = api86_url, ctype = 86, **kwargs)
+        self.prepare(api_url=api85_url, api12_url=api86_url, ctype=86, **kwargs)
 
         #exact copy from original VideoExtractor
         if 'extractor_proxy' in kwargs and kwargs['extractor_proxy']:

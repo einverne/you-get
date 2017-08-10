@@ -20,7 +20,7 @@ class Extractor():
 class VideoExtractor():
     def __init__(self, *args):
         self.url = None
-        self.title = None
+        self.title = None          # 视频标题
         self.vid = None
         self.m3u8_url = None
         self.streams = {}
@@ -33,6 +33,8 @@ class VideoExtractor():
         self.ua = None
         self.referer = None
         self.danmuku = None
+        self.username = None            # 视频作者昵称
+        self.tags = None
 
         if args:
             self.url = args[0]
@@ -86,6 +88,7 @@ class VideoExtractor():
         #raise NotImplementedError()
 
     def p_stream(self, stream_id):
+        """ Print Stream info """
         if stream_id in self.streams:
             stream = self.streams[stream_id]
         else:
@@ -109,6 +112,12 @@ class VideoExtractor():
             if stream['size'] != float('inf')  and stream['size'] != 0:
                 print("      size:          %s MiB (%s bytes)" % (round(stream['size'] / 1048576, 1), stream['size']))
 
+        if 'width' in stream:
+            print("      width:         %s" % stream['width'])
+
+        if 'height' in stream:
+            print("      height:        %s" % stream['height'])
+
         if 'm3u8_url' in stream:
             print("      m3u8_url:      {}".format(stream['m3u8_url']))
 
@@ -131,8 +140,17 @@ class VideoExtractor():
         print()
 
     def p(self, stream_id=None):
+        """
+        Print introduction
+        :param stream_id:
+        :return:
+        """
         maybe_print("site:                %s" % self.__class__.name)
         maybe_print("title:               %s" % self.title)
+        if self.username:
+            maybe_print("username:            %s" % self.username)
+        if self.tags:
+            maybe_print("tags:                %s" % ",".join(self.tags))
         if stream_id:
             # Print the stream
             print("stream:")
