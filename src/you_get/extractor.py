@@ -95,9 +95,11 @@ class VideoExtractor():
             stream = self.dash_streams[stream_id]
 
         if 'itag' in stream:
-            print("    - itag:          %s" % log.sprint(stream_id, log.NEGATIVE))
+            # print("    - itag:          %s" % log.sprint(stream_id, log.NEGATIVE))
+            print("    - itag:          %s" % stream_id)
         else:
-            print("    - format:        %s" % log.sprint(stream_id, log.NEGATIVE))
+            # print("    - format:        %s" % log.sprint(stream_id, log.NEGATIVE))
+            print("    - format:        %s" % stream_id)
 
         if 'container' in stream:
             print("      container:     %s" % stream['container'])
