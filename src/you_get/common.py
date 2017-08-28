@@ -19,6 +19,7 @@ SITES = {
     'douyu'            : 'douyutv',
     'ehow'             : 'ehow',
     'facebook'         : 'facebook',
+    'fantasy'          : 'fantasy',
     'fc2'              : 'fc2video',
     'flickr'           : 'flickr',
     'freesound'        : 'freesound',
@@ -92,6 +93,7 @@ SITES = {
     'miaopai'          : 'yixia',
     'yizhibo'          : 'yizhibo',
     'youku'            : 'youku',
+    'iwara'            : 'iwara',
     'youtu'            : 'youtube',
     'youtube'          : 'youtube',
     'zhanqi'           : 'zhanqi',
@@ -351,11 +353,14 @@ def get_location(url):
     return response.geturl()
 
 def urlopen_with_retry(*args, **kwargs):
-    for i in range(10):
+    for i in range(2):
         try:
             return request.urlopen(*args, **kwargs)
         except socket.timeout:
             logging.debug('request attempt %s timeout' % str(i + 1))
+# try to tackle youku CDN fails
+        except error.HTTPError as http_error:
+            logging.debug('HTTP Error with code{}'.format(http_error.code))
 
 def get_content(url, headers={}, decoded=True):
     """Gets the content of a URL via sending a HTTP GET request.
@@ -531,11 +536,13 @@ def url_locations(urls, faker = False, headers = {}):
         locations.append(response.url)
     return locations
 
-def url_save(url, filepath, bar, refer = None, is_part = False, faker = False, headers = {}, timeout = None, **kwargs):
-#When a referer specified with param refer, the key must be 'Referer' for the hack here
+
+def url_save(url, filepath, bar, refer=None, is_part=False, faker=False, headers=None, timeout=None, **kwargs):
+    tmp_headers = headers.copy() if headers is not None else {}
+# When a referer specified with param refer, the key must be 'Referer' for the hack here
     if refer is not None:
-        headers['Referer'] = refer
-    file_size = url_size(url, faker = faker, headers = headers)
+        tmp_headers['Referer'] = refer
+    file_size = url_size(url, faker=faker, headers=tmp_headers)
 
     if os.path.exists(filepath):
         if not force and file_size == os.path.getsize(filepath):
@@ -569,20 +576,23 @@ def url_save(url, filepath, bar, refer = None, is_part = False, faker = False, h
 
     if received < file_size:
         if faker:
-            headers = fake_headers
+            tmp_headers = fake_headers
+        '''
+        if parameter headers passed in, we have it copied as tmp_header
         elif headers:
             headers = headers
         else:
             headers = {}
+        '''
         if received:
-            headers['Range'] = 'bytes=' + str(received) + '-'
+            tmp_headers['Range'] = 'bytes=' + str(received) + '-'
         if refer:
-            headers['Referer'] = refer
+            tmp_headers['Referer'] = refer
 
         if timeout:
-            response = urlopen_with_retry(request.Request(url, headers=headers), timeout=timeout)
+            response = urlopen_with_retry(request.Request(url, headers=tmp_headers), timeout=timeout)
         else:
-            response = urlopen_with_retry(request.Request(url, headers=headers))
+            response = urlopen_with_retry(request.Request(url, headers=tmp_headers))
         try:
             range_start = int(response.headers['content-range'][6:].split('/')[0].split('-')[0])
             end_length = int(response.headers['content-range'][6:].split('/')[1])
@@ -604,8 +614,8 @@ def url_save(url, filepath, bar, refer = None, is_part = False, faker = False, h
                     if received == file_size: # Download finished
                         break
                     else: # Unexpected termination. Retry request
-                        headers['Range'] = 'bytes=' + str(received) + '-'
-                        response = urlopen_with_retry(request.Request(url, headers=headers))
+                        tmp_headers['Range'] = 'bytes=' + str(received) + '-'
+                        response = urlopen_with_retry(request.Request(url, headers=tmp_headers))
                 output.write(buffer)
                 received += len(buffer)
                 if bar:
