@@ -25,7 +25,7 @@ class Bilibili(VideoExtractor):
     live_api = 'http://live.bilibili.com/api/playurl?cid={}&otype=json'
     api_url = 'http://interface.bilibili.com/playurl?'
     bangumi_api_url = 'http://bangumi.bilibili.com/player/web_api/playurl?'
-    
+
     SEC1 = '1c15888dc316e05a15fdd0a02ed6584f'
     SEC2 = '9b288147e5474dd2aa67085f716c560d'
     stream_types = [
@@ -104,6 +104,14 @@ class Bilibili(VideoExtractor):
                 self.parse_bili_xml(api_xml)
 
     def prepare(self, **kwargs):
+        if socket.getdefaulttimeout() == 600: # no timeout specified
+            socket.setdefaulttimeout(2) # fail fast, very speedy!
+
+        # handle "watchlater" URLs
+        if '/watchlater/' in self.url:
+            aid = re.search(r'av(\d+)', self.url).group(1)
+            self.url = 'http://www.bilibili.com/video/av{}/'.format(aid)
+
         self.ua = fake_headers['User-Agent']
         self.url = url_locations([self.url])[0]
         frag = urllib.parse.urlparse(self.url).fragment
@@ -116,13 +124,18 @@ class Bilibili(VideoExtractor):
                 self.url = 'http://www.bilibili.com/video/av{}/index_{}.html'.format(aid, page)
         self.referer = self.url
         self.page = get_content(self.url)
-        try:
-            self.title = re.search(r'<h1\s*title="([^"]+)"', self.page).group(1)
-            if 'subtitle' in kwargs:
-                subtitle = kwargs['subtitle']
-                self.title = '{} {}'.format(self.title, subtitle)
-        except Exception:
-            pass
+
+        m = re.search(r'<h1\s*title="([^"]+)"', self.page)
+        if m is not None:
+            self.title = m.group(1)
+        if self.title is None:
+            m = re.search(r'<meta property="og:title" content="([^"]+)">', self.page)
+            if m is not None:
+                self.title = m.group(1)
+        if 'subtitle' in kwargs:
+            subtitle = kwargs['subtitle']
+            self.title = '{} {}'.format(self.title, subtitle)
+
         if 'bangumi.bilibili.com/movie' in self.url:
             self.movie_entry(**kwargs)
         elif 'bangumi.bilibili.com' in self.url:
