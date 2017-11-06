@@ -10,7 +10,13 @@ from urllib.parse import urlparse,parse_qs
 
 def qq_download_by_vid(vid, title, output_dir='.', merge=True, info_only=False):
     info_api = 'http://vv.video.qq.com/getinfo?otype=json&appver=3.2.19.333&platform=11&defnpayver=1&vid={}'.format(vid)
-    info = get_content(info_api)
+    headers = {
+        'User-Agent': 'qqlive',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'Host': 'vv.video.qq.com',
+        'Accept-Encoding': 'gzip'
+    }
+    info = get_content(info_api, headers=headers)
     video_json = json.loads(match1(info, r'QZOutputJson=(.*)')[:-1])
 
     fn_pre = video_json['vl']['vi'][0]['lnk']
@@ -27,10 +33,10 @@ def qq_download_by_vid(vid, title, output_dir='.', merge=True, info_only=False):
     part_urls= []
     total_size = 0
     for part in range(1, seg_cnt+1):
-        if seg_cnt == 1 and video_json['vl']['vi'][0]['vh'] <= 480:
-            filename = fn_pre + '.mp4'
-        else:
-            filename = fn_pre + '.p' + str(part_format_id % 10000) + '.' + str(part) + '.mp4'
+        # if seg_cnt == 1 and video_json['vl']['vi'][0]['vh'] <= 480:
+        #     filename = fn_pre + '.mp4'
+        # else:
+        filename = fn_pre + '.p' + str(part_format_id % 10000) + '.' + str(part) + '.mp4'
         key_api = "http://vv.video.qq.com/getkey?otype=json&platform=11&format={}&vid={}&filename={}&appver=3.2.19.333".format(part_format_id, vid, filename)
         part_info = get_content(key_api)
         key_json = json.loads(match1(part_info, r'QZOutputJson=(.*)')[:-1])
