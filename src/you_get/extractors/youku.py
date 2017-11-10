@@ -4,6 +4,8 @@
 import urllib.parse
 import urllib.request
 
+from src.you_get.util.user_agent import UserAgent
+
 from ..common import *
 from ..extractor import VideoExtractor
 
@@ -30,6 +32,8 @@ def fetch_cna():
                 return quote_cna(value)
     log.w('It seems that the client failed to fetch a cna cookie. Please load your own cookie if possible')
     return quote_cna('DOG4EdW4qzsCAbZyXbU+t7Jt')
+
+ua = UserAgent()
 
 
 import random
@@ -94,25 +98,25 @@ class Youku(VideoExtractor):
 
     # Last updated: 2017-10-13
     stream_types = [
-        {'id': 'hd3', 'container': 'flv', 'video_profile': '1080P'},
-        {'id': 'hd3v2', 'container': 'flv', 'video_profile': '1080P'},
-        {'id': 'mp4hd3', 'container': 'mp4', 'video_profile': '1080P'},
+        {'id': 'hd3',      'container': 'flv', 'video_profile': '1080P'},
+        {'id': 'hd3v2',    'container': 'flv', 'video_profile': '1080P'},
+        {'id': 'mp4hd3',   'container': 'mp4', 'video_profile': '1080P'},
         {'id': 'mp4hd3v2', 'container': 'mp4', 'video_profile': '1080P'},
 
-        {'id': 'hd2', 'container': 'flv', 'video_profile': '超清'},
-        {'id': 'hd2v2', 'container': 'flv', 'video_profile': '超清'},
-        {'id': 'mp4hd2', 'container': 'mp4', 'video_profile': '超清'},
+        {'id': 'hd2',      'container': 'flv', 'video_profile': '超清'},
+        {'id': 'hd2v2',    'container': 'flv', 'video_profile': '超清'},
+        {'id': 'mp4hd2',   'container': 'mp4', 'video_profile': '超清'},
         {'id': 'mp4hd2v2', 'container': 'mp4', 'video_profile': '超清'},
 
-        {'id': 'mp4hd', 'container': 'mp4', 'video_profile': '高清'},
+        {'id': 'mp4hd',    'container': 'mp4', 'video_profile': '高清'},
         # not really equivalent to mp4hd
-        {'id': 'flvhd', 'container': 'flv', 'video_profile': '渣清'},
-        {'id': '3gphd', 'container': 'mp4', 'video_profile': '渣清'},
+        {'id': 'flvhd',    'container': 'flv', 'video_profile': '渣清'},
+        {'id': '3gphd',    'container': 'mp4', 'video_profile': '渣清'},
 
-        {'id': 'mp4sd', 'container': 'mp4', 'video_profile': '标清'},
+        {'id': 'mp4sd',    'container': 'mp4', 'video_profile': '标清'},
         # obsolete?
-        {'id': 'flv', 'container': 'flv', 'video_profile': '标清'},
-        {'id': 'mp4', 'container': 'mp4', 'video_profile': '标清'},
+        {'id': 'flv',      'container': 'flv', 'video_profile': '标清'},
+        {'id': 'mp4',      'container': 'mp4', 'video_profile': '标清'},
     ]
 
     def __init__(self):
