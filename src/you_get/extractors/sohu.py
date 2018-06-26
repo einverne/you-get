@@ -28,7 +28,7 @@ def sohu_download(url, output_dir='.', merge=True, info_only=False, extractor_pr
         vid = r1(r'\Wvid\s*[\:=]\s*[\'"]?(\d+)[\'"]?', html)
     assert vid
 
-    if re.match(r'https?://tv.sohu.com/', url):
+    if re.match(r'http[s]://tv.sohu.com/', url):
         if extractor_proxy:
             set_proxy(tuple(extractor_proxy.split(":")))
         info = json.loads(get_decoded_html('http://hot.vrs.sohu.com/vrs_flash.action?vid=%s' % vid))
@@ -55,7 +55,7 @@ def sohu_download(url, output_dir='.', merge=True, info_only=False, extractor_pr
         for new, clip, ck, in zip(data['su'], data['clipsURL'], data['ck']):
             clipURL = urlparse(clip).path
             urls.append(real_url(host, hqvid, tvid, new, clipURL, ck))
-            # assert data['clipsURL'][0].endswith('.mp4')
+        # assert data['clipsURL'][0].endswith('.mp4')
 
     else:
         info = json.loads(get_decoded_html('http://my.tv.sohu.com/play/videonew.do?vid=%s&referer=http://my.tv.sohu.com' % vid))
